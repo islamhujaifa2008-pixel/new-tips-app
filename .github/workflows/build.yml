@@ -28,23 +28,34 @@ jobs:
         pip install --upgrade pip
         pip install --upgrade cython==0.29.36 buildozer
 
-    - name: Force Accept SDK Licenses and Install Build-Tools
+    - name: Pre-setup Android SDK and sdkmanager (Cumulative Fix)
+      env:
+        ANDROID_HOME: /home/runner/android-sdk
       run: |
-        mkdir -p /home/runner/.buildozer/android/platform/android-sdk/tools/bin
-        cd /home/runner/.buildozer/android/platform/android-sdk
+        # এসডিকে এবং বিল্ডুজার এক্সপেক্টেড পাথ তৈরি করা
+        mkdir -p $ANDROID_HOME
+        cd $ANDROID_HOME
         
-        # Command-line tools ডাউনলোড এবং সেটাপ
+        # গুগল থেকে অফিশিয়াল কমান্ড-লাইন টুলস ডাউনলোড ও এক্সট্রাক্ট করা
         curl -o commandlinetools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
         unzip -q commandlinetools.zip
         mkdir -p cmdline-tools/latest
-        mv cmdline-tools/bin cmdline-tools/latest/ 2>/dev/null || true
-        mv cmdline-tools/lib cmdline-tools/latest/ 2>/dev/null || true
+        mv cmdline-tools/bin cmdline-tools/latest/
+        mv cmdline-tools/lib cmdline-tools/latest/
         
-        SDKMANAGER="/home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager"
+        # পাথ যুক্ত করা যাতে sdkmanager সবসময় পাওয়া যায়
+        echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+        echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
         
-        # সমস্ত লাইসেন্স অটোমেটিক এক্সেপ্ট করা এবং বিল্ড-টুলস ইন্সটল করা
-        yes | $SDKMANAGER --licenses || true
-        $SDKMANAGER "platform-tools" "platforms;android-33" "build-tools;37.0.0" || true
+        export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+        
+        # সমস্ত লাইসেন্স অটোমেটিক এক্সেপ্ট করা এবং প্রয়োজনীয় টুলস নামিয়ে নেওয়া
+        yes | sdkmanager --licenses || true
+        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+        
+        # বিল্ডুজার যেন এই এসডিকে ডিরেক্টরিটাই ব্যবহার করে, তাই লিংক বা ফোল্ডার সেটআপ করা
+        mkdir -p ~/.buildozer/android/platform
+        ln -s $ANDROID_HOME ~/.buildozer/android/platform/android-sdk
 
     - name: Build with Buildozer (Final)
       run: buildozer -v android debug
