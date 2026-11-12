@@ -26,9 +26,10 @@ jobs:
     - name: Install Buildozer and Cython
       run: |
         pip install --upgrade pip
+        # পাইথন-ফর-অ্যান্ড্রয়েড এর সাথে সামঞ্জস্যপূর্ণ সাইথন এবং বিল্ডুজার ইন্সটল করা
         pip install --upgrade cython==0.29.36 buildozer
 
-    - name: Cumulative Setup (SDK, Tools, Licenses & Build-Tools)
+    - name: Cumulative Setup (SDK, Tools, Licenses, Build-Tools & Toolchain Fix)
       run: |
         SDK_DIR="/home/runner/.buildozer/android/platform/android-sdk"
         mkdir -p $SDK_DIR
@@ -46,19 +47,22 @@ jobs:
         ln -sf $SDK_DIR/cmdline-tools/latest/bin/sdkmanager $SDK_DIR/tools/bin/sdkmanager
         ln -sf $SDK_DIR/cmdline-tools/latest/bin/avdmanager $SDK_DIR/tools/bin/avdmanager
 
-        # ২. সব ধরনের লাইসেন্স ফোর্সিভলি এক্সেপ্ট করা যাতে কোনো প্রম্পটে না আটকায়
+        # ২. সব ধরনের লাইসেন্স ফোর্সিভলি এক্সেপ্ট করা
         mkdir -p $SDK_DIR/licenses
         echo -e "\n8933bac161af42a8b425bd7971f4d01326c36471" > $SDK_DIR/licenses/android-sdk-license
         echo -e "\n24333f8a43b688d23c7b056aadc915a0f031d3f0" >> $SDK_DIR/licenses/android-sdk-license
         echo -e "\nd56f5187479451eabf01fb78af6dfcb131a6485e" >> $SDK_DIR/licenses/android-sdk-license
 
-        # ৩. বিল্ড-টুলস ও প্ল্যাটফর্ম আগে থেকেই ইন্সটল করে নেওয়া যাতে Aidl বা Build-Tools এরর না আসে
+        # ৩. বিল্ড-টুলস ও প্ল্যাটফর্ম ইন্সটল করা যাতে টুলচেইন ক্রিয়েট করার সময় কোনো বাধা না আসে
         export PATH="$SDK_DIR/cmdline-tools/latest/bin:$SDK_DIR/platform-tools:$PATH"
         yes | sdkmanager --licenses || true
         sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2" "build-tools;37.0.0" || true
 
     - name: Build with Buildozer (Final)
-      run: buildozer -v android debug
+      run: |
+        # পাইথন-ফর-অ্যান্ড্রয়েড টুলচেইন ক্রিয়েটের সময় সম্ভাব্য বাফার বা কম্পাইলেশন ইস্যু এড়াতে লোকাল এনভায়রনমেন্ট ঠিক রাখা
+        export P4A_NDK_CHECK="False"
+        buildozer -v android debug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
