@@ -53,15 +53,17 @@ jobs:
         echo -e "\n24333f8a43b688d23c7b056aadc915a0f031d3f0" >> $SDK_DIR/licenses/android-sdk-license
         echo -e "\nd56f5187479451eabf01fb78af6dfcb131a6485e" >> $SDK_DIR/licenses/android-sdk-license
 
-        # ৩. বিল্ড-টুলস ও প্ল্যাটফর্ম ইন্সটল করা যাতে টুলচেইন ক্রিয়েট করার সময় কোনো বাধা না আসে
+        # ৩. বিল্ড-টুলস ও প্ল্যাটফর্ম ইন্সটল করা
         export PATH="$SDK_DIR/cmdline-tools/latest/bin:$SDK_DIR/platform-tools:$PATH"
         yes | sdkmanager --licenses || true
         sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2" "build-tools;37.0.0" || true
 
     - name: Build with Buildozer (Final)
       run: |
-        # পাইথন-ফর-অ্যান্ড্রয়েড টুলচেইন ক্রিয়েটের সময় সম্ভাব্য বাফার বা কম্পাইলেশন ইস্যু এড়াতে লোকাল এনভায়রনমেন্ট ঠিক রাখা
+        # পাইথন-ফর-অ্যান্ড্রয়েড টুলচেইন ক্রিয়েট করার সময় পাইথন পাথ ও কম্পাইলেশন ইস্যু এড়াতে লোকাল এনভায়রনমেন্ট সেট করা
         export P4A_NDK_CHECK="False"
+        export CFLAGS="-I/usr/include"
+        export LDFLAGS="-L/usr/lib"
         buildozer -v android debug
 
     - name: Upload APK
