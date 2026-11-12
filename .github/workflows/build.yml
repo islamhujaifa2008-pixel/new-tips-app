@@ -1,73 +1,49 @@
-name: CI
+import glob
+import os
 
-on:
-  push:
-    branches: [ main ]
+from kivy.app import App
+from kivy.core.text import LabelBase
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.label import Label
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    steps:
-    - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+def register_font():
+    """fonts ফোল্ডারের প্রথম ফন্ট খুঁজে রেজিস্টার করে। না পেলে None ফেরত দেয়।"""
+    font_files = (
+        glob.glob(os.path.join(BASE_DIR, "fonts", "*.ttf"))
+        + glob.glob(os.path.join(BASE_DIR, "fonts", "*.otf"))
+    )
+    if not font_files:
+        return None
+    try:
+        LabelBase.register(name="CustomFont", fn_regular=font_files[0])
+        return "CustomFont"
+    except Exception:
+        return None
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-            git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev
 
-    - name: Install Buildozer and Cython
-      run: |
-        pip install --upgrade pip
-        # পাইথন-ফর-অ্যান্ড্রয়েড এর সাথে সামঞ্জস্যপূর্ণ সাইথন এবং বিল্ডুজার ইন্সটল করা
-        pip install --upgrade cython==0.29.36 buildozer
+class MyApp(App):
+    def build(self):
+        font = register_font()
+        font_kwargs = {"font_name": font} if font else {}
 
-    - name: Cumulative Setup (SDK, Tools, Licenses, Build-Tools & Toolchain Fix)
-      run: |
-        SDK_DIR="/home/runner/.buildozer/android/platform/android-sdk"
-        mkdir -p $SDK_DIR
-        
-        # ১. অফিশিয়াল কমান্ড-লাইন টুলস নামিয়ে সঠিক জায়গায় সেটআপ করা
-        cd /tmp
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O commandlinetools.zip
-        unzip -q commandlinetools.zip
-        
-        mkdir -p $SDK_DIR/cmdline-tools
-        rm -rf $SDK_DIR/cmdline-tools/latest
-        mv /tmp/cmdline-tools $SDK_DIR/cmdline-tools/latest
-        
-        mkdir -p $SDK_DIR/tools/bin
-        ln -sf $SDK_DIR/cmdline-tools/latest/bin/sdkmanager $SDK_DIR/tools/bin/sdkmanager
-        ln -sf $SDK_DIR/cmdline-tools/latest/bin/avdmanager $SDK_DIR/tools/bin/avdmanager
+        layout = BoxLayout(orientation="vertical", padding=20, spacing=20)
 
-        # ২. সব ধরনের লাইসেন্স ফোর্সিভলি এক্সেপ্ট করা
-        mkdir -p $SDK_DIR/licenses
-        echo -e "\n8933bac161af42a8b425bd7971f4d01326c36471" > $SDK_DIR/licenses/android-sdk-license
-        echo -e "\n24333f8a43b688d23c7b056aadc915a0f031d3f0" >> $SDK_DIR/licenses/android-sdk-license
-        echo -e "\nd56f5187479451eabf01fb78af6dfcb131a6485e" >> $SDK_DIR/licenses/android-sdk-license
+        label = Label(text="অ্যাপ চালু হয়েছে", font_size=40, **font_kwargs)
+        button = Button(text="ক্লিক করুন", font_size=30, size_hint_y=0.3, **font_kwargs)
 
-        # ৩. বিল্ড-টুলস ও প্ল্যাটফর্ম ইন্সটল করা
-        export PATH="$SDK_DIR/cmdline-tools/latest/bin:$SDK_DIR/platform-tools:$PATH"
-        yes | sdkmanager --licenses || true
-        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2" "build-tools;37.0.0" || true
+        def on_click(instance):
+            label.text = "বাটনে ক্লিক হয়েছে"
 
-    - name: Build with Buildozer (Final)
-      run: |
-        # পাইথন-ফর-অ্যান্ড্রয়েড টুলচেইন ক্রিয়েট করার সময় পাইথন পাথ ও কম্পাইলেশন ইস্যু এড়াতে লোকাল এনভায়রনমেন্ট সেট করা
-        export P4A_NDK_CHECK="False"
-        export CFLAGS="-I/usr/include"
-        export LDFLAGS="-L/usr/lib"
-        buildozer -v android debug
+        button.bind(on_press=on_click)
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: package
-        path: bin/*.apk
+        layout.add_widget(label)
+        layout.add_widget(button)
+        return layout
+
+
+if __name__ == "__main__":
+    MyApp().run()
