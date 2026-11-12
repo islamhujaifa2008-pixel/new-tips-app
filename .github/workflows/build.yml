@@ -16,11 +16,31 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Build with Buildozer
-      uses: ArtemSBulgakov/buildozer-action@v1
-      with:
-        command: buildozer -v android debug
-        buildozer_version: master
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+            git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev
+
+    - name: Install Buildozer and Cython
+      run: |
+        pip install --upgrade pip
+        pip install --upgrade cython==0.29.36 buildozer
+
+    - name: Configure Android SDK and Accept Licenses
+      run: |
+        mkdir -p ~/.buildozer/android/platform
+        # বিল্ডুজার যেন কোনো ইন্টারঅ্যাক্টিভ প্রম্পটে আটকে না যায় এবং লাইসেন্স নিজে নিজে টেনে নেয়
+        export HOME=/home/runner
+        buildozer -v android debug || true
+        # লাইসেন্স ফাইল ফোর্সিভলি তৈরি করা
+        mkdir -p /home/runner/.buildozer/android/platform/android-sdk/licenses
+        echo -e "\n8933bac161af42a8b425bd7971f4d01326c36471" > /home/runner/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+        echo -e "\n24333f8a43b688d23c7b056aadc915a0f031d3f0" >> /home/runner/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+
+    - name: Build with Buildozer (Final)
+      run: buildozer -v android debug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
