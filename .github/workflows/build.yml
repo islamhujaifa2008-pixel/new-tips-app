@@ -28,23 +28,23 @@ jobs:
         pip install --upgrade pip
         pip install --upgrade cython==0.29.36 buildozer
 
-    - name: Pre-setup Android SDK and sdkmanager to prevent missing path error
+    - name: Force Accept SDK Licenses and Install Build-Tools
       run: |
         mkdir -p /home/runner/.buildozer/android/platform/android-sdk/tools/bin
         cd /home/runner/.buildozer/android/platform/android-sdk
+        
+        # Command-line tools ডাউনলোড এবং সেটাপ
         curl -o commandlinetools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
         unzip -q commandlinetools.zip
         mkdir -p cmdline-tools/latest
         mv cmdline-tools/bin cmdline-tools/latest/ 2>/dev/null || true
         mv cmdline-tools/lib cmdline-tools/latest/ 2>/dev/null || true
-        # sdkmanager-এর সঠিক পাথ নিশ্চিত করা
-        ln -s /home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager /home/runner/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager || true
-
-        # লাইসেন্স ফাইল নিজে থেকেই তৈরি করে দেওয়া যাতে কোনো প্রম্পটে আটকে না যায়
-        mkdir -p /home/runner/.buildozer/android/platform/android-sdk/licenses
-        echo -e "\n8933bac161af42a8b425bd7971f4d01326c36471" > /home/runner/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
-        echo -e "\n24333f8a43b688d23c7b056aadc915a0f031d3f0" >> /home/runner/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
-        echo -e "\nd56f5187479451eabf01fb78af6dfcb131a6485e" >> /home/runner/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+        
+        SDKMANAGER="/home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager"
+        
+        # সমস্ত লাইসেন্স অটোমেটিক এক্সেপ্ট করা এবং বিল্ড-টুলস ইন্সটল করা
+        yes | $SDKMANAGER --licenses || true
+        $SDKMANAGER "platform-tools" "platforms;android-33" "build-tools;37.0.0" || true
 
     - name: Build with Buildozer (Final)
       run: buildozer -v android debug
