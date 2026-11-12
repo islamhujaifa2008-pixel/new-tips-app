@@ -1,41 +1,23 @@
 [app]
 
-# (str) Title of your application
 title = New Tips
-
-# (str) Package name
 package.name = newtips
-
-# (str) Package domain (needed for android/ios packaging)
 package.domain = org.test
-
-# (str) Source code where the main.py live
 source.dir = .
-
-# (list) Source files to include (leave empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas,ttf
-
-# (list) Application requirements
-requirements = python3,kivy,urllib3,certifi
-
-# (str) Version of your application
+source.include_exts = py,png,jpg,jpeg,kv,atlas,ttf,otf
 version = 0.1
-
-# (str) Supported orientations
+requirements = python3,kivy==2.3.0,urllib3,certifi
 orientation = portrait
+fullscreen = 0
 
-#
-# Android specific
-#
-
-# (list) Permissions
 android.permissions = INTERNET
-
-# (int) Target API, should be as high as possible.
 android.api = 33
-
-# (int) Minimum API your APK will support.
 android.minapi = 21
+android.build_tools_version = 33.0.2
+android.archs = arm64-v8a, armeabi-v7a
+android.accept_sdk_license = True
+android.allow_backup = True
 
-# (str) Supported CPU architectures
-android.archs = arm64-v8a
+[buildozer]
+log_level = 2
+warn_on_root = 1
