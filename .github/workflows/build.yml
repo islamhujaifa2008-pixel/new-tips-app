@@ -28,18 +28,14 @@ jobs:
         pip install --upgrade pip
         pip install --upgrade cython==0.29.36 buildozer
 
-    - name: Configure Android SDK and Accept Licenses
+    - name: Pre-create Android SDK License Hashes
       run: |
-        mkdir -p ~/.buildozer/android/platform
-        # বিল্ডুজার যেন কোনো ইন্টারঅ্যাক্টিভ প্রম্পটে আটকে না যায় এবং লাইসেন্স নিজে নিজে টেনে নেয়
-        export HOME=/home/runner
-        buildozer -v android debug || true
-        # লাইসেন্স ফাইল ফোর্সিভলি তৈরি করা
         mkdir -p /home/runner/.buildozer/android/platform/android-sdk/licenses
         echo -e "\n8933bac161af42a8b425bd7971f4d01326c36471" > /home/runner/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
         echo -e "\n24333f8a43b688d23c7b056aadc915a0f031d3f0" >> /home/runner/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+        echo -e "\nd56f5187479451eabf01fb78af6dfcb131a6485e" >> /home/runner/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
 
-    - name: Build with Buildozer (Final)
+    - name: Build with Buildozer
       run: buildozer -v android debug
 
     - name: Upload APK
