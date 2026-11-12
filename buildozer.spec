@@ -16,8 +16,10 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,ttf
 
 # (list) Application requirements
-# comma separated e.g. requirements = sqlite3,kivy
 requirements = python3,kivy,urllib3,certifi
+
+# (str) Version of your application
+version = 0.1
 
 # (str) Supported orientations
 orientation = portrait
